@@ -1,0 +1,22 @@
+# Environment variables / secrets — never commit these
+.env
+.env.*
+!.env.example
+
+# Local SQLite database (dev-only; hosted version uses Postgres)
+database.db
+*.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Editor/OS junk
+.vscode/
+.DS_Store
+Thumbs.db
