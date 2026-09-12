@@ -1,17 +1,23 @@
-from sqlalchemy import create_engine, String, ForeignKey, or_, event
+from sqlalchemy import create_engine, String, ForeignKey, or_, DateTime
 from sqlalchemy.orm import sessionmaker, Session, Mapped, mapped_column, DeclarativeBase, relationship
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from datetime import date, datetime, timezone, timedelta
 from typing import Optional, List
 from auth import hash_password, verify_password, create_access_token
 import secrets
+import os
+from dotenv import load_dotenv
 
-engine = create_engine("sqlite:///database.db", connect_args={"check_same_thread":False})
-@event.listens_for(engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+load_dotenv()
+
+DATABASE_URL = os.environ['DATABASE_URL']
+
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+
+engine = create_engine(DATABASE_URL)
 LocalSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class Base(DeclarativeBase):
@@ -60,7 +66,7 @@ class PasswordReset(Base):
     )
 
     token: Mapped[str] = mapped_column(String(32), nullable=False, unique=True)
-    expires_at: Mapped[datetime] = mapped_column(nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     used: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="password_resets")
